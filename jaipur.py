@@ -4,6 +4,7 @@ from collections import Counter
 from itertools import combinations
 import timeit
 from jaipur_players import *
+import pandas as pd
 
 cards = {
     'Diamond': 6,
@@ -343,10 +344,17 @@ class Jaipur:
                     return self._inactive_player, move_history, "forfeit"
                 return self._inactive_player, move_history, "illegal move"
 
-            move_history.append(list(curr_move))
+            # Scores before the move
+            p1_before = self.visible_score(self.player1)
+            p2_before = self.visible_score(self.player2)
 
             self.apply_move(curr_move)
             self.print_board()
+
+            p1_after = self.visible_score(self.player1)
+            p2_after = self.visible_score(self.player2)
+
+            move_history.append((list(curr_move), p1_after - p1_before, p2_after - p2_before))
 
         if self.total_score(self.player1) > self.total_score(self.player2):
             return self.player1.name, move_history, "player 1 wins"
@@ -362,3 +370,4 @@ if __name__ == "__main__":
     print(my_deck.total_score(my_deck.player1))
     print(my_deck.total_score(my_deck.player2))
     print(c)
+    print(b)
