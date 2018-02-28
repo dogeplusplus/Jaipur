@@ -4,7 +4,7 @@ import players
 
 class jaipurTest(unittest.TestCase):
     def test_check_hands(self):
-        j = jaipur.Jaipur(players.RandomPlayer(), players.RandomPlayer())
+        j = jaipur.Jaipur(players.RandomPlayer('Alice'), players.RandomPlayer('Bob'))
         j.initial_setup()
         self.assertEqual(len(j.market),5)
         # Check players hand at most 5 cards
@@ -14,8 +14,8 @@ class jaipurTest(unittest.TestCase):
         self.assertTrue('Camel' not in j.hands[j.player1] + j.hands[j.player2])
 
     def test_camel_taking(self):
-        j = jaipur.Jaipur(players.RandomPlayer(), players.RandomPlayer())
-        j.initial_setup()j = jaipur.Jaipur(players.RandomPlayer(), players.RandomPlayer())
+        j = jaipur.Jaipur(players.RandomPlayer('Alice'), players.RandomPlayer('Bob'))
+        j.initial_setup()
 
         # At least 3 camels in the player's herd and no camels in the hands
         j.take_camels()
@@ -23,7 +23,7 @@ class jaipurTest(unittest.TestCase):
         self.assertTrue('Camel' not in j.hands[j.player1])
 
     def test_card_taking(self):
-        j = jaipur.Jaipur(players.RandomPlayer(), players.RandomPlayer())
+        j = jaipur.Jaipur(players.RandomPlayer('Alice'), players.RandomPlayer('Bob'))
         j.initial_setup()
 
         # Arbitrary card from the market
@@ -42,7 +42,7 @@ class jaipurTest(unittest.TestCase):
         self.assertRaises(Exception, j.take_card(card))
 
     def test_card_exchange(self):
-        j = jaipur.Jaipur(players.RandomPlayer(), players.RandomPlayer())
+        j = jaipur.Jaipur(players.RandomPlayer('Alice'), players.RandomPlayer('Bob'))
         j.initial_setup()
 
         # Manual setup
@@ -60,7 +60,7 @@ class jaipurTest(unittest.TestCase):
         self.assertTrue('Cloth' not in j.hands[j.player1] and 'Spice' not in j.hands[j.player1])
 
     def test_sell_cards(self):
-        j = jaipur.Jaipur(players.RandomPlayer(), players.RandomPlayer())
+        j = jaipur.Jaipur(players.RandomPlayer('Alice'), players.RandomPlayer('Bob'))
         j.initial_setup()
 
         # Manual setup
@@ -83,7 +83,7 @@ class jaipurTest(unittest.TestCase):
 
     # Test if the market is being refreshed after actions
     def test_board_replenish(self):
-        j = jaipur.Jaipur(players.RandomPlayer(), players.RandomPlayer())
+        j = jaipur.Jaipur(players.RandomPlayer('Alice'), players.RandomPlayer('Bob'))
         j.initial_setup()
 
         # Arbitrary card from the market
@@ -104,6 +104,21 @@ class jaipurTest(unittest.TestCase):
             self.assertTrue(card in j.hands[j.player2])
 
         self.assertEqual(len(j.market), 5) 
+
+    # Test if the copy returns a new instance
+    def test_copy(self):
+        j = jaipur.Jaipur(players.RandomPlayer('Alice', players.RandomPlayer('Bob')))
+        j_copy = j.copy()
+        j.take_camels()
+
+        self.assertTrue(not j == j_copy)
+
+    # Test playing
+    def test_play(self):
+        j = jaipur.Jaipur(players.RandomPlayer('Alice', players.RandomPlayer('Bob')))
+        winner, moves, outcome = j.play()
+
+        self.assertTrue(winner in ('Alice', 'Bob'))
 
 if __name__=="__main__":
     unittest.main()

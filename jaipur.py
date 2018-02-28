@@ -3,7 +3,7 @@ import copy
 from collections import Counter
 from itertools import combinations
 import timeit
-from jaipur_players import *
+# from jaipur_players import *
 import pandas as pd
 
 cards = {
@@ -100,7 +100,7 @@ class Jaipur:
             random.shuffle(self.bonus_tokens[k])
 
     # Create copy of game for move forecasting
-    def copy(self):
+    def board_copy(self):
         new_board = Jaipur(self.player1, self.player2)
         new_board.deck = self.deck
         new_board.market = self.market
@@ -116,7 +116,7 @@ class Jaipur:
         new_board.herds = self.herds
         new_board.tokens = self.tokens
 
-        return new_board
+        return copy.deepcopy(new_board)
 
     @property
     # Return the active player
@@ -245,16 +245,14 @@ class Jaipur:
 
     # Apply move based on arguments                
     def apply_move(self, args):
-        print(args)
-
-        if args == 'Camels':
+        if args[0] == 'Camels':
             self.take_camels()
         elif args[0] == 'Take':
             self.take_card(args[1])
         elif args[0] == 'Exchange':
-            self.exchange_cards(args[1][0], args[1][1])
+            self.exchange_cards(args[1], args[2])
         elif args[0] == 'Sell':
-            self.sell_cards(args[1][0],int(args[1][1]))
+            self.sell_cards(args[1],int(args[2]))
         else:
             raise Exception("Option is not valid.")
 
@@ -289,12 +287,12 @@ class Jaipur:
 
         # Take all camels from the market
         if 'Camel' in self.market:
-            possible_moves.append(('Camels'))
+            possible_moves.append(('Camels', None, None))
 
         # Actions involving taking 1 card from the market
         if len(self.hands[player]) < 7:
             for card in self.market:
-                possible_moves.append(('Take', (card)))
+                possible_moves.append(('Take', card, None))
 
         # All possible actions for exchanging n cards between the hand and market
         if len(self.hands[player]) > 0:
@@ -302,7 +300,7 @@ class Jaipur:
                 give_card_combos = combinations(self.hands[player] + self.herds[player], i)
                 take_card_combos = combinations(self.market, i)
                 # Add all combinations of cards to swap and remove any redundant swaps, as these can be done using fewer cards
-                possible_moves += [('Exchange', (gc, tc)) for gc in give_card_combos for tc in take_card_combos if not set(gc).intersection(set(tc))]
+                possible_moves += [('Exchange', gc, tc) for gc in give_card_combos for tc in take_card_combos if not set(gc).intersection(set(tc))]
 
         # Selling actions
         card_counter = Counter(self.hands[player])
@@ -313,12 +311,15 @@ class Jaipur:
 
             # Add all the possible selling combinations to the list of moves
             for i in range(min_k, card_counter[k]+1):
-                possible_moves.append(('Sell', (k, i)))
+                # Check that there are enough tokens to sell, if so this is a valid move
+                if len(self.goods_tokens[k]) >= i:
+                    possible_moves.append(('Sell', k, i))
 
         # De-duplicate moves for repeated card
         possible_moves = set(possible_moves)
         return possible_moves
 
+    # Play one iteration of the game
     def play(self, time_limit = 1000):
         self.initial_setup()
 
@@ -328,8 +329,9 @@ class Jaipur:
         # While the deck isn't empty or 3 good piles haven't been depleted yet
         while self.deck != [] and len([good for good in self.goods_tokens if self.goods_tokens[good] == []]) < 3:
             legal_moves = self.get_legal_moves()
-            game_copy = self.copy()
+            game_copy = self.board_copy()
 
+            # Check player makes a move before the time limit
             move_start = time_millis()
             time_left = lambda : time_limit - (time_millis() - move_start)
             curr_move = self._active_player.get_move(game_copy, time_left)
@@ -344,24 +346,61 @@ class Jaipur:
                     return self._inactive_player, move_history, "forfeit"
                 return self._inactive_player, move_history, "illegal move"
 
+        
+            columns=['Camels', 'Take', 'Exchange', 'Sell', 
+                'Camel', 'Diamond', 'Gold', 'Silver', 'Cloth', 'Spice', 'Leather', 
+                'p1_delta', 'p2_delta', 'initiating_player']
+
+            # Record move history and point changes
             # Scores before the move
             p1_before = self.visible_score(self.player1)
             p2_before = self.visible_score(self.player2)
 
-            self.apply_move(curr_move)
-            self.print_board()
 
+            # Record the details of each move by pivoting the arguments into a dictionary.
+            move = {c : 0 for c in columns}
+
+            if curr_move[0] == 'Camels':
+                camel_count = len([x for x in self.market if x == 'Camel'])
+                move['Camels'] = 1
+                move['Camel'] = camel_count
+            elif curr_move[0] == 'Take':
+                move['Take'] = 0
+                move[curr_move[1]] = 1
+                
+            elif curr_move[0] == 'Sell':
+                move['Sell'] = 1
+                move[curr_move[1]] = -curr_move[2]
+            else:
+                move['Exchange'] = 1
+                for card in curr_move[1]:
+                    move[card] -= 1
+                for card in curr_move[2]:
+                    move[card] += 1
+
+            move['initiating_player'] = 1 if self.active_player == self.player1 else 0
+
+            # Apply the move
+            self.apply_move(curr_move)
+
+            # Calculate the point differences
             p1_after = self.visible_score(self.player1)
             p2_after = self.visible_score(self.player2)
+            move['p1_delta'] = p1_after - p1_before
+            move['p2_delta'] = p2_after - p2_before
 
-            move_history.append((list(curr_move), p1_after - p1_before, p2_after - p2_before))
+            # Add the data to the move history
+            move_history.append(move)
 
+        df_move_history = pd.DataFrame(move_history, columns = columns)
+
+        # Final results of the game
         if self.total_score(self.player1) > self.total_score(self.player2):
-            return self.player1.name, move_history, "player 1 wins"
+            return self.player1.name, df_move_history, "Player 1 wins"
         elif self.total_score(self.player1) < self.total_score(self.player2):
-            return self.player2.name, move_history, "player 2 wins"
+            return self.player2.name, df_move_history, "Player 2 wins"
         else:
-            return self.player1.name, move_history, "draw"
+            return self.player1.name, df_move_history, "Draw"
 
 if __name__ == "__main__":
     my_deck = Jaipur(RandomPlayer("Albert"),RandomPlayer("Rohit"))
