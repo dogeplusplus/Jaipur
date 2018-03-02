@@ -53,11 +53,11 @@ def forecast_move(game, move):
 
     return game_copy
 
-########### VALUE HEURISTIC ################################
+########### VALUE HEURISTIC ##############################
 '''
 For each move in the history append a label saying 1 if the player who executed the move is 1 else 0 otherwise.
 This will be the target labels and we can use standard supervised learning to predict the probability of win
 given move at time t.
 The only trouble will be how to capture the interdependencies of moves within the same game.
 '''
-############################################################
+##########################################################

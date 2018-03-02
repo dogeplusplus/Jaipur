@@ -137,12 +137,12 @@ class Jaipur:
         random.shuffle(self.deck)
 
     # Fill any missing cards from the market
-    def replenish_board(self):
-        while len(self.market) < 5:
-            try:
+    def replenish_board(self):     
+        try:
+            while len(self.market) < 5:
                 self.market.append(self.draw())
-            except IndexError:
-                print("No more cards in the deck.")
+        except IndexError:
+            print("No more cards in the deck.")
 
     # Return the score of the players good's tokens
     def visible_score(self, player=None):
