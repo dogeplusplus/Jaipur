@@ -142,7 +142,8 @@ class Jaipur:
             while len(self.market) < 5:
                 self.market.append(self.draw())
         except IndexError:
-            print("No more cards in the deck.")
+            # print("No more cards in the deck.")
+            pass
 
     # Return the score of the players good's tokens
     def visible_score(self, player=None):

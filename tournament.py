@@ -44,6 +44,8 @@ def play_matches(n_matches, player_agents, cpu_agents):
     total_forfeits = 0
     total_illegals = 0
 
+    total_matches = 2 * n_matches * len(player_agents)
+
     print('\n{:^9}{:^13}'.format('Match #', "Opponent") + ''.join(['{:^13}'.format(x.name) for x in cpu_agents]))
     print('{:^9}{:^13} '.format('', '') + ''.join('{:^5}| {:^5}'.format('Won', 'Lost') for agent in cpu_agents))
 
@@ -67,8 +69,21 @@ def play_matches(n_matches, player_agents, cpu_agents):
                 round_totals[i], round_totals[i+1]
             ) for i in range(0, len(round_totals), 2)
         ]))
-    
-    print(total_wins)
+
+    print('-'*74)
+    print('{:^9}{:^13}'.format("", "Win Rate:") + 
+            ''.join([
+                '{:^13}'.format(
+                    '{:.1f}%'.format(100 * total_wins[x[1].name] / total_matches)
+                    ) for x in enumerate(cpu_agents)
+    ]))
+
+    if total_timeouts:
+        print(("\nThere were {} timeouts during the game.").format(total_timeouts))
+    if total_forfeits:
+        print(("\nThere were {} forfeits during the game.").format(total_forfeits))
+    if total_illegals:
+        print(("\nThere were {} illegal moves during the game.".format(total_illegals)))
 
 if __name__ == "__main__":
-    play_matches(10, [JewelPlayer('Jewel1'), GreedyPlayer('Greedy')], [RandomPlayer('Random'), JewelPlayer('Jewel2')])
+    play_matches(10, [JewelPlayer('JewelA'), GreedyPlayer('GreedyA')], [RandomPlayer('RandomB'), JewelPlayer('JewelB')])
