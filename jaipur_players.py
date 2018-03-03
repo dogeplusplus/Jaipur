@@ -61,3 +61,95 @@ given move at time t.
 The only trouble will be how to capture the interdependencies of moves within the same game.
 '''
 ##########################################################
+
+# can do alpha beta pruning if the game history is shown
+
+class SearchTimeout(Exception):
+    pass
+
+class JaipurPlayer:
+    def __init__(self, search_depth=3, score_fn = None, timeout=10.):
+        self.search_depth = search_depth
+        self.score_fn = score_fn
+        self.time_left = None
+        self.TIMER_THRESHOLD = timeout
+
+class MinimaxPlayer(JaipurPlayer):
+
+    # Get the best move from the minimax algorithm
+    def get_move(self, game, time_left):
+        self.time_left = time_left
+
+        best_move = random.sample(game.get_legal_moves(),1)[0]
+
+        try:
+            return self.minimax(game, self.search_depth)
+
+        except SearchTimeout:
+            pass
+
+    # Minimax algorithm
+    def minimax(self, game, depth):
+
+        # Best move on the current player's choice
+        def max_value(state, current_depth):
+            if self.time_left() < self.TIMER_THRESHOLD:
+                raise SearchTimeout
+            if not state.get_legal_moves() or current_depth >= depth:
+                return self.score(state, self)
+
+            v = float("-inf")
+
+            for a in state.get_legal_moves():
+                v = max(v, min_value(forecast_move(state, a), current_depth + 1))
+
+            return v
+
+        # Worst move on the opponent player's choice
+        def min_value(state, current_depth):
+            if self.time_left() < self.TIMER_THRESHOLD:
+                raise SearchTimeout
+            if not state.get_legal_moves() or current_depth >= depth:
+                return self.score(state, self)
+
+            v = float("inf")
+
+            for a in state.get_legal_moves():
+                v = min(v, max_value(forecast_move(state, a), current_depth + 1))
+
+            return v
+
+        # Return best move from root
+        argmax_fn = lambda x: min_value(game.forecast_move(x), 1)
+
+        best_action = None
+        best_value = float("-inf")
+
+        if not game.get_legal_moves():
+            return best_action
+
+        return max(game.get_legal_moves(), key = argmax_fn)
+
+class AlphaBetaPlayer(JaipurPlayer):
+
+    def get_move(self, game, time_left):
+        best_move = random.sample(game.get_legal_moves(),1)[0]
+        self.time_left = time_left
+
+        depth = 20
+        for d in range(1, depth):
+            try:
+                best_move = self.alphabeta(game, d)
+            except SearchTimeout:
+                return best_move
+
+    def alphabeta(game, depth, alpha=float("-inf"), beta=float("inf")):
+
+        def max_value(game, alpha, beta, current_depth):
+            if self.time_left() <  self.TIMER_THRESHOLD:
+                raise SearchTimeout
+            if not state.get_legal_moves() or current_depth >= depth:
+                return self.score(state, self)
+
+            v = float("inf")
+
