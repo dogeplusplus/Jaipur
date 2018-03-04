@@ -68,9 +68,9 @@ class SearchTimeout(Exception):
     pass
 
 class JaipurPlayer:
-    def __init__(self, search_depth=3, score_fn = None, timeout=10.):
+    def __init__(self, search_depth=3, score_fn=None, timeout=10.):
         self.search_depth = search_depth
-        self.score_fn = score_fn
+        self.score = score_fn
         self.time_left = None
         self.TIMER_THRESHOLD = timeout
 
@@ -120,7 +120,7 @@ class MinimaxPlayer(JaipurPlayer):
             return v
 
         # Return best move from root
-        argmax_fn = lambda x: min_value(game.forecast_move(x), 1)
+        argmax_fn = lambda x: min_value(forecast_move(game, x), 1)
 
         best_action = None
         best_value = float("-inf")
@@ -145,11 +145,71 @@ class AlphaBetaPlayer(JaipurPlayer):
 
     def alphabeta(game, depth, alpha=float("-inf"), beta=float("inf")):
 
-        def max_value(game, alpha, beta, current_depth):
+        def max_value(state, alpha=float("-inf"), beta=float("inf"), current_depth=1):
             if self.time_left() <  self.TIMER_THRESHOLD:
                 raise SearchTimeout
             if not state.get_legal_moves() or current_depth >= depth:
                 return self.score(state, self)
 
+            v = float("-inf")
+
+            for move in state.get_legal_moves():
+                v = max(v, min_value(forecast_move(state, move), alpha, beta, current_depth + 1))
+                if v >= beta:
+                    return v
+                alpha = max(alpha, v)
+            return v
+
+        def min_value(state, alpha=float("-inf"), beta=float("inf"), current_depth=1):
+            if self.time_left < self.TIMER_THRESHOLD:
+                raise SearchTimeout
+            if not state.get_legal_moves() or current_depth >= depth:
+                return self.score(state, self)
+
             v = float("inf")
+
+            for move in state.get_legal_moves():
+                v = min(v, max_value(forecast_move(state, move), alpha, beta, current_depth + 1))
+
+                if v <= alpha:
+                    return v
+                beta = min(beta, v)
+            return v
+
+        root_legal_moves = game.get_legal_moves()
+
+        if not root_legal_moves:
+            return None
+
+        best_action = root_legal_moves[0]
+        best_v = alpha
+
+        for move in root_legal_moves:
+            v_test = min_value(forecast_move(game, move), alpha, beta, 1)
+            if v_test > best_v:
+                best_action = move
+                best_v = float(v_test)
+
+        return best_action
+
+# Return the score of the move that gives the most benefit to the player
+def custom_score(game, player):
+
+    moves = game.get_legal_moves(player)
+    current_points = game.visible_score(player)
+    point_differential = [forecast_move(game, move).visible_score(player) - current_points for move in moves]
+    return max(point_differential)
+
+# Return the number of sell actions the player has
+def custom_score_2(game, player):
+
+    moves = game.get_legal_moves(player)
+    sell_actions = [move for move in moves if move[0] == 'Sell']
+    return len(sell_actions)
+
+# Return the number of moves the player has
+def custom_score_3(game, player):
+    return len(game.get_legal_moves(player))
+
+# Return the difference in the number of moves that 
 
