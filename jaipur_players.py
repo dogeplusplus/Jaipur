@@ -4,9 +4,8 @@ import numpy as np
 
 # Pick best move based off a value function   
 class GreedyPlayer():
-    def __init__(self, name, score=None):
-        self.name = name
-        self.score_fn = score
+    def __init__(self, score=None):
+        pass
 
     def get_move(self, game, time_left):
         previous_score = game.visible_score()
@@ -25,16 +24,16 @@ class GreedyPlayer():
 
 # Random moves
 class RandomPlayer():
-    def __init__(self, name, score=None):
-        self.name = name
+    def __init__(self, score=None):
+        pass
 
     def get_move(self, game, time_left=0):
         return random.sample(game.get_legal_moves(),1)[0]
 
 # Prioritises moves that involve the taking and selling of Jewel goods, as these have the most value in the game
 class JewelPlayer():
-    def __init__(self, name, score=None):
-        self.name = name
+    def __init__(self, score=None):
+        pass
 
     def get_move(self, game, time_left=0):
         legal_moves =  [move for move in game.get_legal_moves()
@@ -45,24 +44,12 @@ class JewelPlayer():
         else:
             return random.sample(game.get_legal_moves(),1)[0] 
         
-
 # Forecast the move, to be used by the players for inference
 def forecast_move(game, move):
     game_copy = game.board_copy()
     game_copy.apply_move(move)
 
     return game_copy
-
-########### VALUE HEURISTIC ##############################
-'''
-For each move in the history append a label saying 1 if the player who executed the move is 1 else 0 otherwise.
-This will be the target labels and we can use standard supervised learning to predict the probability of win
-given move at time t.
-The only trouble will be how to capture the interdependencies of moves within the same game.
-'''
-##########################################################
-
-# can do alpha beta pruning if the game history is shown
 
 class SearchTimeout(Exception):
     pass
@@ -195,6 +182,11 @@ class AlphaBetaPlayer(JaipurPlayer):
 # Return the score of the move that gives the most benefit to the player
 def custom_score(game, player):
 
+    if game.is_winner(player):
+        return float("inf")
+    elif game.is_loser(player):
+        return float("-inf")
+
     moves = game.get_legal_moves(player)
     current_points = game.visible_score(player)
     point_differential = [forecast_move(game, move).visible_score(player) - current_points for move in moves]
@@ -203,13 +195,21 @@ def custom_score(game, player):
 # Return the number of sell actions the player has
 def custom_score_2(game, player):
 
+    if game.is_winner(player):
+        return float("inf")
+    elif game.is_loser(player):
+        return float("-inf")
+
     moves = game.get_legal_moves(player)
     sell_actions = [move for move in moves if move[0] == 'Sell']
     return len(sell_actions)
 
 # Return the number of moves the player has
 def custom_score_3(game, player):
+
+    if game.is_winner(player):
+        return float("inf")
+    elif game.is_loser(player):
+        return float("-inf")
+
     return len(game.get_legal_moves(player))
-
-# Return the difference in the number of moves that 
-

@@ -320,6 +320,33 @@ class Jaipur:
         possible_moves = set(possible_moves)
         return possible_moves
 
+    # Check if the game has finished and determine who is the winner. Ties do not count. 
+    def is_winner(self, player):
+        if self.deck == [] or len([good for good in self.goods_tokens if self.goods_tokens[good] == []]) < 3:
+            player_scores = {self.player1.name: self.total_score(player=self.player1),
+                             self.player2.name: self.total_score(player=self.player2)
+                             }
+
+            if player == self.player1.name:
+                return player_scores[player] > player_scores[self.player2.name]
+            else:
+                return player_scores[player] > player_scores[self.player1.name]
+
+        return False
+
+    def is_loser(self, player):
+        if self.deck == [] or len([good for good in self.goods_tokens if self.goods_tokens[good] == []]) < 3:
+            player_scores = {self.player1.name: self.total_score(player=self.player1),
+                             self.player2.name: self.total_score(player=self.player2)
+                             }
+
+            if player == self.player1.name:
+                return player_scores[player] < player_scores[self.player2.name]
+            else:
+                return player_scores[player] < player_scores[self.player1.name]
+
+        return False
+
     # Play one iteration of the game
     def play(self, time_limit = 1000):
         self.initial_setup()
@@ -335,7 +362,7 @@ class Jaipur:
             # Check player makes a move before the time limit
             move_start = time_millis()
             time_left = lambda : time_limit - (time_millis() - move_start)
-            curr_move = self._active_player.get_move(game_copy, time_left)
+            curr_move = self._active_player.player.get_move(game_copy, time_left)
 
             move_end = time_left()
 

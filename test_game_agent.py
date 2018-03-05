@@ -1,6 +1,6 @@
 import unittest
 import jaipur
-import players
+import jaipur_players
 
 class jaipurTest(unittest.TestCase):
     def test_check_hands(self):
@@ -107,7 +107,7 @@ class jaipurTest(unittest.TestCase):
 
     # Test if the copy returns a new instance
     def test_copy(self):
-        j = jaipur.Jaipur(players.RandomPlayer('Alice', players.RandomPlayer('Bob')))
+        j = jaipur.Jaipur(players.RandomPlayer('Alice'), players.RandomPlayer('Bob'))
         j_copy = j.copy()
         j.take_camels()
 
@@ -115,7 +115,7 @@ class jaipurTest(unittest.TestCase):
 
     # Test playing
     def test_play(self):
-        j = jaipur.Jaipur(players.RandomPlayer('Alice', players.RandomPlayer('Bob')))
+        j = jaipur.Jaipur(players.RandomPlayer('Alice'), players.RandomPlayer('Bob'))
         winner, moves, outcome = j.play()
 
         self.assertTrue(winner in ('Alice', 'Bob'))
