@@ -5,7 +5,7 @@ from collections import namedtuple
 
 Agent = namedtuple("Agent", ["player", "name"])
 
-TIME_LIMIT = 50
+TIME_LIMIT = 100
 
 # for each player agent play matches against all the CPU agents and record scores
 def play_round(player_agent, cpu_agents, win_counts, num_matches):
