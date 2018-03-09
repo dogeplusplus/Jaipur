@@ -1,9 +1,11 @@
 from jaipur import Jaipur
 from jaipur_players import RandomPlayer, JewelPlayer, GreedyPlayer, MinimaxPlayer, AlphaBetaPlayer
-from jaipur_players import custom_score, custom_score_2, custom_score_3
+from jaipur_players import custom_score_1, custom_score_2, custom_score_3
 from collections import namedtuple
 
 Agent = namedtuple("Agent", ["player", "name"])
+
+TIME_LIMIT = 50
 
 # for each player agent play matches against all the CPU agents and record scores
 def play_round(player_agent, cpu_agents, win_counts, num_matches):
@@ -21,7 +23,7 @@ def play_round(player_agent, cpu_agents, win_counts, num_matches):
 
         # play a single game
         for game in games:
-            winner, _, termination = game.play()
+            winner, _, termination = game.play(time_limit=TIME_LIMIT)
             win_counts[winner] += 1
 
             # add to early termination
@@ -90,13 +92,15 @@ def play_matches(n_matches, player_agents, cpu_agents):
         print(("\nThere were {} illegal moves during the game.".format(total_illegals)))
 
 if __name__ == "__main__":
-    JewelAgent = Agent(JewelPlayer(), "Jewel")
-    GreedyAgent = Agent(GreedyPlayer(), "Greedy")
-    RandomAgent = Agent(RandomPlayer(), "Random")
-    MinimaxAgent = Agent(MinimaxPlayer(score_fn = custom_score), "Minimax 1")
-    MinimaxAgent_2 = Agent(MinimaxPlayer(score_fn = custom_score_2), "Minimax 2")
-    MinimaxAgent_3 = Agent(MinimaxPlayer(score_fn = custom_score_3), "Minimax 3")
-    AlphabetaAgent = Agent(AlphaBetaPlayer(score_fn = custom_score), "AlphaBeta 1")
-    AlphabetaAgent_2 = Agent(AlphaBetaPlayer(score_fn = custom_score_2), "AlphaBeta 2")
-    AlphabetaAgent_3 = Agent(AlphaBetaPlayer(score_fn = custom_score_3), "AlphaBeta 3")
-    play_matches(10, [JewelAgent, GreedyAgent, RandomAgent], [MinimaxAgent, AlphabetaAgent])
+    play_matches(5,
+                [
+                AlphaBetaPlayer(score_fn = custom_score_1),
+                AlphaBetaPlayer(score_fn = custom_score_2),
+                AlphaBetaPlayer(score_fn = custom_score_3),
+                MinimaxPlayer(score_fn = custom_score_1),
+                MinimaxPlayer(score_fn = custom_score_2),
+                MinimaxPlayer(score_fn = custom_score_3)],
+                [JewelPlayer(), 
+                GreedyPlayer(),
+                RandomPlayer()]
+                )

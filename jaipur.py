@@ -37,37 +37,43 @@ class Jaipur:
         }
 
         # Player objects
-        self.player1 = player1
-        self.player2 = player2
-        self.active_player = player1
-        self.inactive_player = player2
+        self.name1 = player1.name
+        self.name2 = player2.name
+
+        self.agents = {
+            self.name1: player1,
+            self.name2: player2
+        }
+
+        self.active_player = self.name1
+        self.inactive_player = self.name2
 
         # Store generic cards
         self.hands = {
-            player1: [],
-            player2: []
+            self.name1: [],
+            self.name2: []
         }
 
         # Store camels here
         self.herds = {
-            player1: [],
-            player2: []
+            self.name1: [],
+            self.name2: []
         }
 
         # Goods tokens and bonus tokens
         self.tokens = {
-            player1: [[],[]],
-            player2: [[],[]]
+            self.name1: [[],[]],
+            self.name2: [[],[]]
         }
 
         self.camel_token = None
 
     # Determine which player has the most camels
     def camel_token_allocate(self):
-        if len(self.herds[self.player1]) > len(self.herds[self.player2]):
-            self.camel_token = self.player1
-        elif len(self.herds[self.player2]) > len(self.herds[self.player1]):
-            self.camel_token = self.player2
+        if len(self.herds[self.name1]) > len(self.herds[self.name2]):
+            self.camel_token = self.name1
+        elif len(self.herds[self.name2]) > len(self.herds[self.name1]):
+            self.camel_token = self.name2
         else:
             self.camel_token = None
 
@@ -85,15 +91,15 @@ class Jaipur:
             self.market.append(self.draw())
 
         # Add cards to player hands
-        self.hands[self.player1] = [self.draw() for _ in range(5)]
-        self.hands[self.player2] = [self.draw() for _ in range(5)]
+        self.hands[self.name1] = [self.draw() for _ in range(5)]
+        self.hands[self.name2] = [self.draw() for _ in range(5)]
 
         # Add camels from the player hands to the herds
         # Check change herds before changing the player hands otherwise camels get deleted
-        self.herds[self.player1] = [card for card in self.hands[self.player1] if card == 'Camel']
-        self.herds[self.player2] = [card for card in self.hands[self.player2] if card == 'Camel']
-        self.hands[self.player1] = [card for card in self.hands[self.player1] if card != 'Camel']
-        self.hands[self.player2] = [card for card in self.hands[self.player2] if card != 'Camel']
+        self.herds[self.name1] = [card for card in self.hands[self.name1] if card == 'Camel']
+        self.herds[self.name2] = [card for card in self.hands[self.name2] if card == 'Camel']
+        self.hands[self.name1] = [card for card in self.hands[self.name1] if card != 'Camel']
+        self.hands[self.name2] = [card for card in self.hands[self.name2] if card != 'Camel']
 
         # Shuffle bonus tokens
         for k in self.bonus_tokens:
@@ -101,7 +107,7 @@ class Jaipur:
 
     # Create copy of game for move forecasting
     def board_copy(self):
-        new_board = Jaipur(self.player1, self.player2)
+        new_board = Jaipur(self.agents[self.name1], self.agents[self.name2])
         new_board.deck = self.deck
         new_board.market = self.market
         new_board.discard_pile = self.discard_pile
@@ -192,7 +198,12 @@ class Jaipur:
             
         give_card_count = Counter(give_cards)
         hand_count = Counter(self.hands[self.active_player])
+
         if any(give_card_count[c] > hand_count[c] for c, _ in give_card_count.items()):
+            print(self.active_player)
+            print(give_cards)
+            print(take_cards)
+            print(self.hands)
             raise Exception("Not enough cards to give.")
 
         # Check if there are enough cards to take from the market
@@ -238,7 +249,8 @@ class Jaipur:
             # If 3 or more sold give them a bonus token
             if n >= 3:
                 try:
-                    bt = self.bonus_tokens[n].pop()
+                    # Cap off bonus token sales if the player is trying to sell 6 cards
+                    bt = self.bonus_tokens[min(n,5)].pop()
                     self.tokens[self.active_player][1].append(bt)
                 # No more bonus tokens for this amount
                 except IndexError:
@@ -268,15 +280,15 @@ class Jaipur:
             print(good, '|', ' '.join(map(str,self.goods_tokens[good])))
             print('-'*20)
 
-        hand_1 = ' ' if not self.hands[self.player1] else ' '.join(self.hands[self.player1])
-        herd_1 = ' ' if not self.herds[self.player1] else ' '.join(self.herds[self.player1])
-        hand_2 = ' ' if not self.hands[self.player2] else ' '.join(self.hands[self.player2])
-        herd_2 = ' ' if not self.herds[self.player2] else ' '.join(self.herds[self.player2])
+        hand_1 = ' ' if not self.hands[self.name1] else ' '.join(self.hands[self.name1])
+        herd_1 = ' ' if not self.herds[self.name1] else ' '.join(self.herds[self.name1])
+        hand_2 = ' ' if not self.hands[self.name2] else ' '.join(self.hands[self.name2])
+        herd_2 = ' ' if not self.herds[self.name2] else ' '.join(self.herds[self.name2])
 
-        print('%s''s hand: %s' % (self.player1.name, hand_1), end=' ')
-        print('%s''s herd: %s' % (self.player1.name, herd_1))
-        print('%s''s hand: %s' % (self.player2.name, hand_2), end=' ')
-        print('%s''s herd: %s' % (self.player2.name, herd_2))
+        print('%s''s hand: %s' % (self.name1, hand_1), end=' ')
+        print('%s''s herd: %s' % (self.name1, herd_1))
+        print('%s''s hand: %s' % (self.name2, hand_2), end=' ')
+        print('%s''s herd: %s' % (self.name2, herd_2))
         print('Market: %s' % ' '.join(self.market))
 
     # A player can either take cards or sell, but not both
@@ -323,32 +335,32 @@ class Jaipur:
     # Check if the game has finished and determine who is the winner. Ties do not count. 
     def is_winner(self, player):
         if self.deck == [] or len([good for good in self.goods_tokens if self.goods_tokens[good] == []]) < 3:
-            player_scores = {self.player1.name: self.total_score(player=self.player1),
-                             self.player2.name: self.total_score(player=self.player2)
+            player_scores = {self.name1: self.total_score(player=self.name1),
+                             self.name2: self.total_score(player=self.name2)
                              }
 
-            if player == self.player1.name:
-                return player_scores[player] > player_scores[self.player2.name]
+            if player == self.name1:
+                return player_scores[player] > player_scores[self.name1]
             else:
-                return player_scores[player] > player_scores[self.player1.name]
+                return player_scores[player] > player_scores[self.name2]
 
         return False
 
     def is_loser(self, player):
         if self.deck == [] or len([good for good in self.goods_tokens if self.goods_tokens[good] == []]) < 3:
-            player_scores = {self.player1.name: self.total_score(player=self.player1),
-                             self.player2.name: self.total_score(player=self.player2)
+            player_scores = {self.name1: self.total_score(player=self.name1),
+                             self.name2: self.total_score(player=self.name2)
                              }
 
-            if player == self.player1.name:
-                return player_scores[player] < player_scores[self.player2.name]
+            if player == self.name1:
+                return player_scores[player] < player_scores[self.name2]
             else:
-                return player_scores[player] < player_scores[self.player1.name]
+                return player_scores[player] < player_scores[self.name1]
 
         return False
 
     # Play one iteration of the game
-    def play(self, time_limit = 1000):
+    def play(self, time_limit = 50):
         self.initial_setup()
 
         move_history = []
@@ -362,7 +374,7 @@ class Jaipur:
             # Check player makes a move before the time limit
             move_start = time_millis()
             time_left = lambda : time_limit - (time_millis() - move_start)
-            curr_move = self._active_player.player.get_move(game_copy, time_left)
+            curr_move = self.agents[self._active_player].get_move(game_copy, time_left)
 
             move_end = time_left()
 
@@ -381,8 +393,8 @@ class Jaipur:
 
             # Record move history and point changes
             # Scores before the move
-            p1_before = self.visible_score(self.player1)
-            p2_before = self.visible_score(self.player2)
+            p1_before = self.visible_score(self.name1)
+            p2_before = self.visible_score(self.name2)
 
 
             # Record the details of each move by pivoting the arguments into a dictionary.
@@ -406,14 +418,14 @@ class Jaipur:
                 for card in curr_move[2]:
                     move[card] += 1
 
-            move['initiating_player'] = 1 if self.active_player == self.player1 else 0
+            move['initiating_player'] = 1 if self.active_player == self.name1 else 0
 
             # Apply the move
             self.apply_move(curr_move)
 
             # Calculate the point differences
-            p1_after = self.visible_score(self.player1)
-            p2_after = self.visible_score(self.player2)
+            p1_after = self.visible_score(self.name1)
+            p2_after = self.visible_score(self.name2)
             move['p1_delta'] = p1_after - p1_before
             move['p2_delta'] = p2_after - p2_before
 
@@ -423,12 +435,12 @@ class Jaipur:
         df_move_history = pd.DataFrame(move_history, columns = columns)
 
         # Final results of the game
-        if self.total_score(self.player1) > self.total_score(self.player2):
-            return self.player1.name, df_move_history, "Player 1 wins"
-        elif self.total_score(self.player1) < self.total_score(self.player2):
-            return self.player2.name, df_move_history, "Player 2 wins"
+        if self.total_score(self.name1) > self.total_score(self.name2):
+            return self.name1, df_move_history, "Player 1 wins"
+        elif self.total_score(self.name1) < self.total_score(self.name2):
+            return self.name2, df_move_history, "Player 2 wins"
         else:
-            return self.player1.name, df_move_history, "Draw"
+            return self.name1, df_move_history, "Draw"
 
 if __name__ == "__main__":
     my_deck = Jaipur(RandomPlayer("Albert"),RandomPlayer("Rohit"))

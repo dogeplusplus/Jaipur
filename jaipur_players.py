@@ -5,7 +5,7 @@ import numpy as np
 # Pick best move based off a value function   
 class GreedyPlayer():
     def __init__(self, score=None):
-        pass
+        self.name = 'Greedy'
 
     def get_move(self, game, time_left):
         previous_score = game.visible_score()
@@ -25,7 +25,7 @@ class GreedyPlayer():
 # Random moves
 class RandomPlayer():
     def __init__(self, score=None):
-        pass
+        self.name = 'Random'
 
     def get_move(self, game, time_left=0):
         return random.sample(game.get_legal_moves(),1)[0]
@@ -33,7 +33,7 @@ class RandomPlayer():
 # Prioritises moves that involve the taking and selling of Jewel goods, as these have the most value in the game
 class JewelPlayer():
     def __init__(self, score=None):
-        pass
+        self.name = 'Jewel'
 
     def get_move(self, game, time_left=0):
         legal_moves =  [move for move in game.get_legal_moves()
@@ -63,6 +63,10 @@ class JaipurPlayer:
 
 class MinimaxPlayer(JaipurPlayer):
 
+    def __init__(self, search_depth=3, score_fn=None, timeout=10.):
+        JaipurPlayer.__init__(self, search_depth, score_fn, timeout)
+        self.name = 'Minimax{}'.format(score_fn.__name__[-1])
+
     # Get the best move from the minimax algorithm
     def get_move(self, game, time_left):
         self.time_left = time_left
@@ -73,7 +77,7 @@ class MinimaxPlayer(JaipurPlayer):
             return self.minimax(game, self.search_depth)
 
         except SearchTimeout:
-            pass
+            return best_move
 
     # Minimax algorithm
     def minimax(self, game, depth):
@@ -119,7 +123,12 @@ class MinimaxPlayer(JaipurPlayer):
 
 class AlphaBetaPlayer(JaipurPlayer):
 
+    def __init__(self, search_depth=3, score_fn=None, timeout=10.):
+        JaipurPlayer.__init__(self, search_depth, score_fn, timeout)
+        self.name = 'AlphaBeta{}'.format(score_fn.__name__[-1])
+
     def get_move(self, game, time_left):
+
         best_move = random.sample(game.get_legal_moves(),1)[0]
         self.time_left = time_left
 
@@ -130,7 +139,7 @@ class AlphaBetaPlayer(JaipurPlayer):
             except SearchTimeout:
                 return best_move
 
-    def alphabeta(game, depth, alpha=float("-inf"), beta=float("inf")):
+    def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
 
         def max_value(state, alpha=float("-inf"), beta=float("inf"), current_depth=1):
             if self.time_left() <  self.TIMER_THRESHOLD:
@@ -148,7 +157,7 @@ class AlphaBetaPlayer(JaipurPlayer):
             return v
 
         def min_value(state, alpha=float("-inf"), beta=float("inf"), current_depth=1):
-            if self.time_left < self.TIMER_THRESHOLD:
+            if self.time_left() < self.TIMER_THRESHOLD:
                 raise SearchTimeout
             if not state.get_legal_moves() or current_depth >= depth:
                 return self.score(state, self)
@@ -168,7 +177,7 @@ class AlphaBetaPlayer(JaipurPlayer):
         if not root_legal_moves:
             return None
 
-        best_action = root_legal_moves[0]
+        best_action = list(root_legal_moves)[0]
         best_v = alpha
 
         for move in root_legal_moves:
@@ -180,36 +189,36 @@ class AlphaBetaPlayer(JaipurPlayer):
         return best_action
 
 # Return the score of the move that gives the most benefit to the player
-def custom_score(game, player):
+def custom_score_1(game, player):
 
-    if game.is_winner(player):
+    if game.is_winner(player.name):
         return float("inf")
-    elif game.is_loser(player):
+    elif game.is_loser(player.name):
         return float("-inf")
 
-    moves = game.get_legal_moves(player)
-    current_points = game.visible_score(player)
-    point_differential = [forecast_move(game, move).visible_score(player) - current_points for move in moves]
+    moves = game.get_legal_moves()
+    current_points = game.visible_score(player.name)
+    point_differential = [forecast_move(game, move).visible_score(player.name) - current_points for move in moves]
     return max(point_differential)
 
 # Return the number of sell actions the player has
 def custom_score_2(game, player):
 
-    if game.is_winner(player):
+    if game.is_winner(player.name):
         return float("inf")
-    elif game.is_loser(player):
+    elif game.is_loser(player.name):
         return float("-inf")
 
-    moves = game.get_legal_moves(player)
+    moves = game.get_legal_moves()
     sell_actions = [move for move in moves if move[0] == 'Sell']
     return len(sell_actions)
 
 # Return the number of moves the player has
 def custom_score_3(game, player):
 
-    if game.is_winner(player):
+    if game.is_winner(player.name):
         return float("inf")
-    elif game.is_loser(player):
+    elif game.is_loser(player.name):
         return float("-inf")
 
-    return len(game.get_legal_moves(player))
+    return len(game.get_legal_moves())
